@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f0ea;
+  --foreground: #1a1a1a;
+  --surface: #fffdf9;
+  --surface-hover: #f0ebe4;
+  --border: #1a1a1a;
+  --border-light: #d4cfc8;
+  --muted: #8a8478;
+  --accent: #e63946;
+  --accent-light: #e6394610;
+  --green: #2d6a4f;
+  --amber: #f59e0b;
+  --red: #e63946;
 }
 
 @theme inline {
@@ -12,15 +22,71 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+@keyframes fade-out-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.animate-fade-out-down {
+  animation: fade-out-down 0.3s ease-in forwards;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+/* ─── Shimmer text effect on "viral" ─── */
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.fire-text {
+  color: #e63946;
+  background: linear-gradient(
+    90deg,
+    #e63946 0%,
+    #e63946 40%,
+    #ff6b35 50%,
+    #e63946 60%,
+    #e63946 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
 }
