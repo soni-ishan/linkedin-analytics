@@ -169,11 +169,28 @@ export interface CompanyComputedStats {
     avgCTR: number;
     avgEngagementRate: number;
   }>;
+  totalEngagements: number;
   cumulativeMetrics: Array<{
     date: string;
     impressions: number;
     clicks: number;
     reactions: number;
+  }>;
+  dailyEngagements: Array<{
+    date: string;
+    engagements: number;
+    clicks: number;
+    reactions: number;
+    comments: number;
+    reposts: number;
+  }>;
+  cumulativeEngagements: Array<{
+    date: string;
+    engagements: number;
+    clicks: number;
+    reactions: number;
+    comments: number;
+    reposts: number;
   }>;
   engagementBreakdown: {
     clicks: number;

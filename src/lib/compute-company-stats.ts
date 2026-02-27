@@ -82,6 +82,8 @@ export function computeCompanyStats(data: CompanyData): CompanyComputedStats {
     }))
     .sort((a, b) => b.avgImpressions - a.avgImpressions);
 
+  const totalEngagements = totalClicks + totalReactions + totalComments + totalReposts;
+
   // Cumulative metrics
   const sorted = [...metrics].sort((a, b) => a.date.localeCompare(b.date));
   let cumImpr = 0, cumClicks = 0, cumReactions = 0;
@@ -90,6 +92,25 @@ export function computeCompanyStats(data: CompanyData): CompanyComputedStats {
     cumClicks += d.clicksTotal;
     cumReactions += d.reactionsTotal;
     return { date: d.date, impressions: cumImpr, clicks: cumClicks, reactions: cumReactions };
+  });
+
+  // Daily and cumulative engagements (total = clicks + reactions + comments + reposts)
+  const dailyEngagements = sorted.map((d) => ({
+    date: d.date,
+    engagements: d.clicksTotal + d.reactionsTotal + d.commentsTotal + d.repostsTotal,
+    clicks: d.clicksTotal,
+    reactions: d.reactionsTotal,
+    comments: d.commentsTotal,
+    reposts: d.repostsTotal,
+  }));
+  let cumEng = 0, cumEngClicks = 0, cumEngReactions = 0, cumEngComments = 0, cumEngReposts = 0;
+  const cumulativeEngagements = sorted.map((d) => {
+    cumEng += d.clicksTotal + d.reactionsTotal + d.commentsTotal + d.repostsTotal;
+    cumEngClicks += d.clicksTotal;
+    cumEngReactions += d.reactionsTotal;
+    cumEngComments += d.commentsTotal;
+    cumEngReposts += d.repostsTotal;
+    return { date: d.date, engagements: cumEng, clicks: cumEngClicks, reactions: cumEngReactions, comments: cumEngComments, reposts: cumEngReposts };
   });
 
   // Day of week breakdown
@@ -145,9 +166,12 @@ export function computeCompanyStats(data: CompanyData): CompanyComputedStats {
     avgPostCTR: postCTRs.length > 0 ? postCTRs.reduce((a, b) => a + b, 0) / postCTRs.length : 0,
     medianPostImpressions: median(postImpressions),
     uniqueImpressionRatio: totalImpressions > 0 ? totalUnique / totalImpressions : 0,
+    totalEngagements,
     authorStats,
     contentTypeStats,
     cumulativeMetrics,
+    dailyEngagements,
+    cumulativeEngagements,
     engagementBreakdown: { clicks: totalClicks, reactions: totalReactions, comments: totalComments, reposts: totalReposts },
     topDays: { impressions: topImprDays, clicks: topClickDays },
     dayOfWeekBreakdown,

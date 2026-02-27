@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { CompanyData, DateRange } from "@/lib/types";
 import { computeCompanyStats } from "@/lib/compute-company-stats";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, formatDateRange } from "@/lib/format";
 import DateRangeSelector from "@/components/dashboard/DateRangeSelector";
 import CompanyImpressionsChart from "./CompanyImpressionsChart";
 import EngagementBreakdownChart from "./EngagementBreakdownChart";
@@ -95,7 +95,7 @@ export default function CompanyDashboard({ data }: Props) {
     setCustomEnd(end);
   };
 
-  const { filteredData, stats } = useMemo(() => {
+  const { filteredData, stats, postDateMap, topPostRanks, periodLabel } = useMemo(() => {
     let cutoffStart: string;
     let cutoffEnd: string;
 
@@ -119,9 +119,43 @@ export default function CompanyDashboard({ data }: Props) {
       posts: filteredPosts,
     };
 
+    const computedStats = computeCompanyStats(filtered);
+
+    // Build date -> postUrl map for clickable chart dots
+    const dateMap = new Map<string, string>();
+    for (const post of filteredPosts) {
+      dateMap.set(post.createdDate, post.url);
+    }
+
+    // Top 3 posts by impressions -> date -> { rank, impressions, url }
+    const ranks = new Map<string, { rank: number; impressions: number; url: string }>();
+    const sortedPosts = [...filteredPosts]
+      .filter((p) => p.impressions > 0)
+      .sort((a, b) => b.impressions - a.impressions)
+      .slice(0, 3);
+    sortedPosts.forEach((p, i) => {
+      ranks.set(p.createdDate, {
+        rank: i,
+        impressions: p.impressions,
+        url: p.url,
+      });
+    });
+
+    // Compute date range label
+    const metricDates = filteredMetrics.map((d) => d.date).sort();
+    const rangeStart = metricDates[0] || cutoffStart;
+    const rangeEnd = metricDates[metricDates.length - 1] || cutoffEnd;
+    const label =
+      rangeStart && rangeEnd && rangeEnd !== "9999-12-31"
+        ? formatDateRange(rangeStart, rangeEnd)
+        : "";
+
     return {
       filteredData: filtered,
-      stats: computeCompanyStats(filtered),
+      stats: computedStats,
+      postDateMap: dateMap,
+      topPostRanks: ranks,
+      periodLabel: label,
     };
   }, [data, dateRange, customStart, customEnd]);
 
@@ -139,12 +173,16 @@ export default function CompanyDashboard({ data }: Props) {
         dataEndDate={dataEndDate}
       />
 
-      {/* ── Impressions ── */}
+      {/* -- Impressions -- */}
       <section className="space-y-3">
         <SectionLabel>Impressions</SectionLabel>
         <CompanyImpressionsChart
           data={filteredData.dailyMetrics}
           cumulativeData={stats.cumulativeMetrics}
+          postDateMap={postDateMap}
+          topPostRanks={topPostRanks}
+          totalImpressions={stats.totalImpressions}
+          periodLabel={periodLabel}
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <StatCard
@@ -164,9 +202,8 @@ export default function CompanyDashboard({ data }: Props) {
             value={formatNumber(stats.avgPostImpressions)}
           />
           <StatCard
-            label="Unique impr. ratio"
-            value={`${(stats.uniqueImpressionRatio * 100).toFixed(1)}%`}
-            tooltip="Unique impressions / Total impressions — shows how many unique people see your content"
+            label="Median post impressions"
+            value={formatNumber(stats.medianPostImpressions)}
           />
         </div>
         <TopDays
@@ -175,14 +212,27 @@ export default function CompanyDashboard({ data }: Props) {
         />
       </section>
 
-      {/* ── Engagement ── */}
+      {/* -- Engagement -- */}
       <section className="space-y-3">
         <SectionLabel>Engagement</SectionLabel>
-        <EngagementBreakdownChart data={filteredData.dailyMetrics} />
+        <EngagementBreakdownChart
+          data={stats.dailyEngagements}
+          cumulativeData={stats.cumulativeEngagements}
+          postDateMap={postDateMap}
+          topPostRanks={topPostRanks}
+          totalEngagements={stats.totalEngagements}
+          periodLabel={periodLabel}
+        />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <StatCard
+            label="Total engagements"
+            value={formatNumber(stats.totalEngagements)}
+            tooltip="Clicks + reactions + comments + reposts"
+          />
           <StatCard
             label="Total clicks"
             value={formatNumber(stats.totalClicks)}
+            tooltip="Clicks on your content, company name, or logo by a signed-in member"
           />
           <StatCard
             label="Total reactions"
@@ -193,32 +243,29 @@ export default function CompanyDashboard({ data }: Props) {
             value={formatNumber(stats.totalComments)}
           />
           <StatCard
-            label="Total reposts"
-            value={formatNumber(stats.totalReposts)}
-          />
-          <StatCard
             label="Avg engagement rate"
             value={`${(stats.avgEngagementRate * 100).toFixed(2)}%`}
+            tooltip="(Clicks + reactions + comments + reposts) / Impressions"
           />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <EngagementPieChart breakdown={stats.engagementBreakdown} />
           <TopDays
-            title="Best Days — Clicks"
+            title="Best Days — Engagements"
             days={stats.topDays.clicks}
           />
         </div>
       </section>
 
-      {/* ── Author Performance ── */}
-      {stats.authorStats.length > 1 && (
+      {/* -- Author Performance -- */}
+      {stats.authorStats.length > 0 && (
         <section className="space-y-3">
           <SectionLabel>Author Performance</SectionLabel>
           <AuthorTable authors={stats.authorStats} />
         </section>
       )}
 
-      {/* ── Content Type ── */}
+      {/* -- Content Type -- */}
       {stats.contentTypeStats.length > 1 && (
         <section className="space-y-3">
           <SectionLabel>Content Type</SectionLabel>
@@ -226,13 +273,13 @@ export default function CompanyDashboard({ data }: Props) {
         </section>
       )}
 
-      {/* ── Day of Week ── */}
+      {/* -- Day of Week -- */}
       <section className="space-y-3">
         <SectionLabel>Performance by Day of Week</SectionLabel>
         <CompanyDayOfWeekChart data={stats.dayOfWeekBreakdown} />
       </section>
 
-      {/* ── Posts Table ── */}
+      {/* -- Posts Table -- */}
       <CompanyPostsTable posts={filteredData.posts} />
     </div>
   );

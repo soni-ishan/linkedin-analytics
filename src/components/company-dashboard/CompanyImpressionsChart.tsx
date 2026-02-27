@@ -9,7 +9,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import Card from "@/components/ui/Card";
 import ChartModeToggle from "@/components/ui/ChartModeToggle";
@@ -17,12 +16,54 @@ import { COLORS } from "@/lib/constants";
 import { formatDateFull, makeTickFormatter, formatNumber } from "@/lib/format";
 import type { CompanyDailyMetrics } from "@/lib/types";
 
+const RANK_COLORS = [COLORS.gold, COLORS.silver, COLORS.bronze];
+
+function PostDot(props: {
+  cx?: number;
+  cy?: number;
+  payload?: { date: string };
+  postDateMap: Map<string, string>;
+  topPostRanks: Map<string, { rank: number; impressions: number; url: string }>;
+}) {
+  const { cx, cy, payload, postDateMap, topPostRanks } = props;
+  if (!cx || !cy || !payload) return null;
+  const url = postDateMap.get(payload.date);
+  if (!url) return null;
+
+  const medal = topPostRanks.get(payload.date);
+  const fill = medal != null ? RANK_COLORS[medal.rank] : COLORS.red;
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={medal != null ? 7 : 5}
+      fill={fill}
+      stroke="#fff"
+      strokeWidth={2}
+      style={{ cursor: "pointer" }}
+      onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+    />
+  );
+}
+
 interface Props {
   data: CompanyDailyMetrics[];
   cumulativeData: Array<{ date: string; impressions: number; clicks: number; reactions: number }>;
+  postDateMap: Map<string, string>;
+  topPostRanks: Map<string, { rank: number; impressions: number; url: string }>;
+  totalImpressions: number;
+  periodLabel: string;
 }
 
-export default function CompanyImpressionsChart({ data, cumulativeData }: Props) {
+export default function CompanyImpressionsChart({
+  data,
+  cumulativeData,
+  postDateMap,
+  topPostRanks,
+  totalImpressions,
+  periodLabel,
+}: Props) {
   const [mode, setMode] = useState<"daily" | "cumulative">("daily");
 
   const chartData = useMemo(() => {
@@ -57,27 +98,59 @@ export default function CompanyImpressionsChart({ data, cumulativeData }: Props)
   const isCumulative = mode === "cumulative";
 
   return (
-    <Card title="Impressions Over Time">
+    <Card>
+      <div className="mb-3 flex items-start justify-between">
+        <h3 className="font-mono text-xs font-medium text-[var(--muted)]">
+          Impressions
+        </h3>
+        <div className="text-right">
+          <p className="font-mono text-[11px] text-[var(--muted)] sm:text-xs">
+            +{formatNumber(totalImpressions)} impressions
+          </p>
+          {periodLabel && (
+            <p className="font-mono text-[10px] tracking-tight text-[var(--border)]">{periodLabel}</p>
+          )}
+        </div>
+      </div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <ChartModeToggle mode={mode} onChange={setMode} />
-        {!isCumulative && (
-          <div className="flex items-center gap-4 text-[11px] text-[var(--muted)]">
-            <p>
-              <span
-                className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: COLORS.organic }}
-              />
-              Organic
-            </p>
-            <p>
-              <span
-                className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: COLORS.clicks }}
-              />
-              Total
-            </p>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--muted)]">
+          {!isCumulative && (
+            <>
+              <p>
+                <span
+                  className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: COLORS.organic }}
+                />
+                Organic
+              </p>
+              <p>
+                <span
+                  className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: COLORS.clicks }}
+                />
+                Total
+              </p>
+            </>
+          )}
+          {postDateMap.size > 0 && (
+            <>
+              <p>
+                <span
+                  className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: COLORS.red }}
+                />
+                Post published
+              </p>
+              <p className="flex items-center gap-1">
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS.gold }} />
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS.silver }} />
+                <span className="mr-0.5 inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS.bronze }} />
+                Top 3
+              </p>
+            </>
+          )}
+        </div>
       </div>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -121,18 +194,23 @@ export default function CompanyImpressionsChart({ data, cumulativeData }: Props)
               }}
             />
             {isCumulative ? (
-              <>
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="impressions"
-                  stroke={COLORS.organic}
-                  strokeWidth={2}
-                  fill="url(#organicFill)"
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              </>
+              <Area
+                type="monotone"
+                dataKey="impressions"
+                stroke={COLORS.organic}
+                strokeWidth={2}
+                fill="url(#organicFill)"
+                dot={(dotProps) => (
+                  <PostDot
+                    key={dotProps.payload?.date}
+                    {...dotProps}
+                    postDateMap={postDateMap}
+                    topPostRanks={topPostRanks}
+                  />
+                )}
+                activeDot={false}
+                isAnimationActive={false}
+              />
             ) : (
               <>
                 <Area
@@ -141,7 +219,15 @@ export default function CompanyImpressionsChart({ data, cumulativeData }: Props)
                   stroke={COLORS.clicks}
                   strokeWidth={2}
                   fill="url(#totalFill)"
-                  dot={false}
+                  dot={(dotProps) => (
+                    <PostDot
+                      key={dotProps.payload?.date}
+                      {...dotProps}
+                      postDateMap={postDateMap}
+                      topPostRanks={topPostRanks}
+                    />
+                  )}
+                  activeDot={false}
                   isAnimationActive={false}
                 />
                 <Area

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Card from "@/components/ui/Card";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import type { AuthorStats } from "@/lib/types";
 import { formatNumber } from "@/lib/format";
 
@@ -98,10 +99,16 @@ export default function AuthorTable({ authors }: { authors: AuthorStats[] }) {
                 <SortHeader label="Avg Impr." sortKey="avgImpressions" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
               </th>
               <th className="pb-2 pr-4 text-right">
-                <SortHeader label="Avg CTR" sortKey="avgCTR" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                <div className="flex items-center justify-end">
+                  <SortHeader label="Avg CTR" sortKey="avgCTR" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                  <InfoTooltip text="Click-through rate = Clicks / Impressions" />
+                </div>
               </th>
               <th className="pb-2 text-right">
-                <SortHeader label="Avg Eng %" sortKey="avgEngagementRate" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                <div className="flex items-center justify-end">
+                  <SortHeader label="Avg Eng %" sortKey="avgEngagementRate" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                  <InfoTooltip text="Engagement rate = (Clicks + reactions + comments + reposts) / Impressions" />
+                </div>
               </th>
             </tr>
           </thead>

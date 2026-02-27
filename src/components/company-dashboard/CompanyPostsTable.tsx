@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Card from "@/components/ui/Card";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import type { CompanyPost } from "@/lib/types";
 import { formatNumber } from "@/lib/format";
 
@@ -131,13 +132,22 @@ export default function CompanyPostsTable({ posts }: { posts: CompanyPost[] }) {
                 <SortHeader label="Impr." sortKey="impressions" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
               </th>
               <th className="pb-2 pr-2 text-right">
-                <SortHeader label="Clicks" sortKey="clicks" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                <div className="flex items-center justify-end">
+                  <SortHeader label="Clicks" sortKey="clicks" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                  <InfoTooltip text="Clicks on your content, company name, or logo by a signed-in member" />
+                </div>
               </th>
               <th className="pb-2 pr-2 text-right">
-                <SortHeader label="CTR" sortKey="ctr" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                <div className="flex items-center justify-end">
+                  <SortHeader label="CTR" sortKey="ctr" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                  <InfoTooltip text="Click-through rate = Clicks / Impressions" />
+                </div>
               </th>
               <th className="pb-2 text-right">
-                <SortHeader label="Eng %" sortKey="engagementRate" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                <div className="flex items-center justify-end">
+                  <SortHeader label="Eng %" sortKey="engagementRate" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="justify-end" />
+                  <InfoTooltip text="Engagement rate = (Clicks + reactions + comments + reposts) / Impressions" />
+                </div>
               </th>
             </tr>
           </thead>
