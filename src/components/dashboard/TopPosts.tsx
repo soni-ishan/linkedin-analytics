@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Card from "@/components/ui/Card";
 import InfoTooltip from "@/components/ui/InfoTooltip";
 import type { TopPost } from "@/lib/types";
-import { formatNumber, formatDateFull } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 
 interface TopPostsProps {
   posts: TopPost[];
@@ -35,7 +35,7 @@ function SortHeader({
   return (
     <button
       onClick={() => onSort(sortKey)}
-      className={`flex w-full items-center gap-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
+      className={`flex w-full items-center gap-0.5 font-mono text-[10px] uppercase tracking-wider transition-colors ${
         active
           ? "font-semibold text-[var(--foreground)]"
           : "text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -47,6 +47,15 @@ function SortHeader({
       )}
     </button>
   );
+}
+
+function formatDateShort(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "2-digit",
+  });
 }
 
 export default function TopPosts({ posts }: TopPostsProps) {
@@ -62,12 +71,6 @@ export default function TopPosts({ posts }: TopPostsProps) {
       setSortDir("desc");
     }
   };
-
-  // Top 3 by impressions for medal assignment (stable regardless of sort)
-  const top3Urls = useMemo(() => {
-    const sorted = [...posts].sort((a, b) => b.impressions - a.impressions);
-    return new Set(sorted.slice(0, 3).map((p) => p.url));
-  }, [posts]);
 
   const medalMap = useMemo(() => {
     const sorted = [...posts].sort((a, b) => b.impressions - a.impressions);
@@ -114,16 +117,12 @@ export default function TopPosts({ posts }: TopPostsProps) {
 
   return (
     <Card title="Top 50 Posts">
-      {/* Table */}
       <div className="overflow-x-clip">
         <table className="w-full border-collapse">
-          <colgroup>
-            <col className="w-8" />
-          </colgroup>
           <thead>
             <tr className="border-b border-[var(--border-light)]">
-              <th className="w-8 pb-2" />
-              <th className="pb-2 pr-4 text-left">
+              <th className="w-6 pb-2" />
+              <th className="pb-2 pr-2 text-left">
                 <SortHeader
                   label="Date"
                   sortKey="publishDate"
@@ -132,14 +131,14 @@ export default function TopPosts({ posts }: TopPostsProps) {
                   onSort={handleSort}
                 />
               </th>
-              <th className="pb-2 pr-4 text-left">
+              <th className="pb-2 pr-2 text-left">
                 <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
                   Post
                 </span>
               </th>
-              <th className="pb-2 pr-4 text-right">
+              <th className="pb-2 pr-2 text-right">
                 <SortHeader
-                  label="Impressions"
+                  label="Impr."
                   sortKey="impressions"
                   currentKey={sortKey}
                   currentDir={sortDir}
@@ -147,10 +146,10 @@ export default function TopPosts({ posts }: TopPostsProps) {
                   className="justify-end"
                 />
               </th>
-              <th className="pb-2 pr-4 text-right">
+              <th className="pb-2 pr-2 text-right">
                 <div className="flex w-full items-center justify-end">
                   <SortHeader
-                    label="Engagements"
+                    label="Eng."
                     sortKey="engagements"
                     currentKey={sortKey}
                     currentDir={sortDir}
@@ -162,7 +161,7 @@ export default function TopPosts({ posts }: TopPostsProps) {
               </th>
               <th className="pb-2 text-right">
                 <SortHeader
-                  label="Eng. Rate"
+                  label="Rate"
                   sortKey="engagementRate"
                   currentKey={sortKey}
                   currentDir={sortDir}
@@ -181,44 +180,31 @@ export default function TopPosts({ posts }: TopPostsProps) {
                   key={post.url}
                   className="border-b border-[var(--border-light)] last:border-0"
                 >
-                  {/* Medal */}
-                  <td className="w-8 py-2.5 pr-1 text-center">
-                    {hasMedal ? (
-                      <span className="text-base">{medals[medalIdx]}</span>
-                    ) : null}
+                  <td className="w-6 py-2 pr-1 text-center text-sm">
+                    {hasMedal ? medals[medalIdx] : null}
                   </td>
-
-                  {/* Date */}
-                  <td className="whitespace-nowrap py-2.5 pr-4 font-mono text-xs text-[var(--muted)]">
-                    {formatDateFull(post.publishDate)}
+                  <td className="whitespace-nowrap py-2 pr-2 font-mono text-[11px] text-[var(--muted)]">
+                    {formatDateShort(post.publishDate)}
                   </td>
-
-                  {/* Post link */}
-                  <td className="py-2.5 pr-4">
+                  <td className="py-2 pr-2">
                     <a
                       href={post.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-xs text-[#0077B5] hover:underline"
+                      className="font-mono text-[11px] text-[#0077B5] hover:underline"
                     >
-                      View post &rarr;
+                      Link
                     </a>
                   </td>
-
-                  {/* Impressions */}
-                  <td className="whitespace-nowrap py-2.5 pr-4 text-right font-mono text-xs">
+                  <td className="whitespace-nowrap py-2 pr-2 text-right font-mono text-[11px]">
                     {post.impressions > 0
                       ? formatNumber(post.impressions)
                       : <span className="text-[var(--muted)]">—</span>}
                   </td>
-
-                  {/* Engagements */}
-                  <td className="whitespace-nowrap py-2.5 pr-4 text-right font-mono text-xs">
+                  <td className="whitespace-nowrap py-2 pr-2 text-right font-mono text-[11px]">
                     {formatNumber(post.engagements)}
                   </td>
-
-                  {/* Engagement rate (engagements / impressions) */}
-                  <td className="whitespace-nowrap py-2.5 text-right font-mono text-xs text-[var(--muted)]">
+                  <td className="whitespace-nowrap py-2 text-right font-mono text-[11px] text-[var(--muted)]">
                     {post.impressions > 0
                       ? `${((post.engagements / post.impressions) * 100).toFixed(1)}%`
                       : "—"}
@@ -230,7 +216,6 @@ export default function TopPosts({ posts }: TopPostsProps) {
         </table>
       </div>
 
-      {/* View all / collapse */}
       {hasMore && (
         <button
           onClick={() => setShowAll((s) => !s)}

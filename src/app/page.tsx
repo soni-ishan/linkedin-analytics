@@ -151,7 +151,7 @@ export default function Home() {
             rel="noopener noreferrer"
             className="underline decoration-[var(--border-light)] underline-offset-4 transition-colors hover:text-[var(--foreground)] hover:decoration-[var(--foreground)]"
           >
-            Source
+            Source code
           </a>
         </p>
       </footer>
