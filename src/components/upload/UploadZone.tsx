@@ -132,8 +132,8 @@ export default function UploadZone({ onDataLoaded, compact }: UploadZoneProps) {
             <p className="mb-2 font-mono text-sm font-bold uppercase tracking-wider">
               Drop your .xlsx here
             </p>
-            <p className="text-sm text-[var(--muted)]">
-              or click to browse your files
+            <p className="font-mono text-[10px] text-[var(--muted)]">
+              Your data never leaves your browser.
             </p>
           </>
         )}

@@ -81,21 +81,8 @@ export default function Home() {
           engagement metrics, follower growth, and more.
         </p>
 
-        {/* Trust / privacy as subtext */}
-        <p className="mb-8 text-center font-mono text-xs text-[var(--muted)]">
-          Your data never leaves your browser.{" "}
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline decoration-[var(--border-light)] underline-offset-4 transition-colors hover:text-[var(--foreground)] hover:decoration-[var(--foreground)]"
-          >
-            View source code &rarr;
-          </a>
-        </p>
-
         {/* Upload zone */}
-        <div className="mb-3 w-full max-w-xl">
+        <div className="mb-3 mt-8 w-full max-w-xl">
           <UploadZone onDataLoaded={handleUpload} />
         </div>
         <button
@@ -157,7 +144,15 @@ export default function Home() {
           >
             Ishaan
           </a>
-          {" "}❤️
+          {" "}· {" "}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline decoration-[var(--border-light)] underline-offset-4 transition-colors hover:text-[var(--foreground)] hover:decoration-[var(--foreground)]"
+          >
+            Source
+          </a>
         </p>
       </footer>
     </div>
