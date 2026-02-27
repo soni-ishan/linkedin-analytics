@@ -37,7 +37,7 @@ export default function Home() {
               onClick={handleReset}
               className="font-mono text-xs font-bold tracking-wider hover:text-[var(--accent)] sm:text-sm"
             >
-              areyouviral
+              areyouviral?
             </button>
             <span className="font-mono text-[10px] text-[var(--muted)] sm:text-xs">
               Made by{" "}
