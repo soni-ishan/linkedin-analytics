@@ -66,16 +66,28 @@ export default function CompanyImpressionsChart({
 }: Props) {
   const [mode, setMode] = useState<"daily" | "cumulative">("daily");
 
+  // Check if there's any sponsored data — only show organic vs total split when there is
+  const hasSponsored = useMemo(
+    () => data.some((d) => d.impressionsSponsored > 0),
+    [data]
+  );
+
   const chartData = useMemo(() => {
     if (mode === "cumulative") {
       return cumulativeData;
     }
+    if (hasSponsored) {
+      return data.map((d) => ({
+        date: d.date,
+        organic: d.impressionsOrganic,
+        total: d.impressionsTotal,
+      }));
+    }
     return data.map((d) => ({
       date: d.date,
-      organic: d.impressionsOrganic,
-      total: d.impressionsTotal,
+      impressions: d.impressionsTotal,
     }));
-  }, [data, cumulativeData, mode]);
+  }, [data, cumulativeData, mode, hasSponsored]);
 
   const tickFormatter = useMemo(
     () => makeTickFormatter(chartData),
@@ -115,21 +127,21 @@ export default function CompanyImpressionsChart({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <ChartModeToggle mode={mode} onChange={setMode} />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--muted)]">
-          {!isCumulative && (
+          {!isCumulative && hasSponsored && (
             <>
-              <p>
+              <p className="flex items-center gap-1.5">
                 <span
-                  className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full"
+                  className="inline-block h-0.5 w-4"
                   style={{ backgroundColor: COLORS.organic }}
                 />
                 Organic
               </p>
-              <p>
+              <p className="flex items-center gap-1.5">
                 <span
-                  className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full"
+                  className="inline-block h-0.5 w-4"
                   style={{ backgroundColor: COLORS.clicks }}
                 />
-                Total
+                Total (organic + sponsored)
               </p>
             </>
           )}
@@ -140,13 +152,13 @@ export default function CompanyImpressionsChart({
                   className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full"
                   style={{ backgroundColor: COLORS.red }}
                 />
-                Post published
+                Post published (click to view)
               </p>
               <p className="flex items-center gap-1">
                 <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS.gold }} />
                 <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS.silver }} />
                 <span className="mr-0.5 inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS.bronze }} />
-                Top 3
+                Top 3 posts by impressions
               </p>
             </>
           )}
@@ -211,7 +223,7 @@ export default function CompanyImpressionsChart({
                 activeDot={false}
                 isAnimationActive={false}
               />
-            ) : (
+            ) : hasSponsored ? (
               <>
                 <Area
                   type="monotone"
@@ -240,6 +252,24 @@ export default function CompanyImpressionsChart({
                   isAnimationActive={false}
                 />
               </>
+            ) : (
+              <Area
+                type="monotone"
+                dataKey="impressions"
+                stroke={COLORS.organic}
+                strokeWidth={2}
+                fill="url(#organicFill)"
+                dot={(dotProps) => (
+                  <PostDot
+                    key={dotProps.payload?.date}
+                    {...dotProps}
+                    postDateMap={postDateMap}
+                    topPostRanks={topPostRanks}
+                  />
+                )}
+                activeDot={false}
+                isAnimationActive={false}
+              />
             )}
           </AreaChart>
         </ResponsiveContainer>
