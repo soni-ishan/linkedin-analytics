@@ -1,6 +1,7 @@
 "use client";
 
 import Card from "@/components/ui/Card";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import { COLORS } from "@/lib/constants";
 import { formatNumber } from "@/lib/format";
 
@@ -39,6 +40,9 @@ export default function EngagementPieChart({ breakdown }: Props) {
                     style={{ backgroundColor: item.color }}
                   />
                   <span className="font-mono text-[11px]">{item.label}</span>
+                  {item.key === "clicks" && (
+                    <InfoTooltip text="Clicks on your content, company name, or logo by a signed-in member" />
+                  )}
                 </div>
                 <span className="font-mono text-[11px] text-[var(--muted)]">
                   {formatNumber(value)} ({pct.toFixed(1)}%)

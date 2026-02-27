@@ -161,7 +161,7 @@ export function computeCompanyStats(data: CompanyData): CompanyComputedStats {
     totalReposts,
     avgDailyImpressions: Math.round(totalImpressions / dayCount),
     avgDailyClicks: Math.round(totalClicks / dayCount),
-    avgEngagementRate: engRates.length > 0 ? engRates.reduce((a, b) => a + b, 0) / engRates.length : 0,
+    avgEngagementRate: totalImpressions > 0 ? totalEngagements / totalImpressions : 0,
     avgPostImpressions: Math.round(postImpressions.reduce((s, n) => s + n, 0) / (postImpressions.length || 1)),
     avgPostCTR: postCTRs.length > 0 ? postCTRs.reduce((a, b) => a + b, 0) / postCTRs.length : 0,
     medianPostImpressions: median(postImpressions),

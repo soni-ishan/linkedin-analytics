@@ -185,14 +185,19 @@ export default function CompanyDashboard({ data }: Props) {
           periodLabel={periodLabel}
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <StatCard
-            label="Total impressions"
-            value={formatNumber(stats.totalImpressions)}
-          />
-          <StatCard
-            label="Organic impressions"
-            value={formatNumber(stats.totalImpressionsOrganic)}
-          />
+          <div className="border border-[var(--border-light)] bg-[var(--surface)] px-4 py-3">
+            <p className="text-[11px] leading-relaxed text-[var(--muted)]">Total impressions</p>
+            <p className="mt-0.5 font-mono text-lg font-semibold">{formatNumber(stats.totalImpressions)}</p>
+            {stats.totalImpressionsSponsored > 0 ? (
+              <p className="mt-1 font-mono text-[10px] text-[var(--muted)]">
+                {formatNumber(stats.totalImpressionsOrganic)} organic · {formatNumber(stats.totalImpressionsSponsored)} sponsored
+              </p>
+            ) : (
+              <p className="mt-1 font-mono text-[10px] text-[var(--muted)]">
+                100% organic
+              </p>
+            )}
+          </div>
           <StatCard
             label="Avg daily impressions"
             value={formatNumber(stats.avgDailyImpressions)}
@@ -204,6 +209,11 @@ export default function CompanyDashboard({ data }: Props) {
           <StatCard
             label="Median post impressions"
             value={formatNumber(stats.medianPostImpressions)}
+          />
+          <StatCard
+            label="Unique impr. ratio"
+            value={`${(stats.uniqueImpressionRatio * 100).toFixed(1)}%`}
+            tooltip="Unique impressions / Total impressions — how many unique people see your content"
           />
         </div>
         <TopDays
