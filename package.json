@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "fetch:linkedin": "node scripts/fetch-linkedin-data.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^1.6.1",

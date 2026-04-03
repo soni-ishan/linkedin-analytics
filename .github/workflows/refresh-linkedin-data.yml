@@ -1,0 +1,45 @@
+name: Refresh LinkedIn Data
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh LinkedIn snapshot
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+          LINKEDIN_OUTPUT_FILE: src/data/live-linkedin-snapshot.json
+          LINKEDIN_ANALYTICS_ENDPOINTS: ${{ secrets.LINKEDIN_ANALYTICS_ENDPOINTS }}
+        run: npm run fetch:linkedin
+
+      - name: Commit updated snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/live-linkedin-snapshot.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: refresh LinkedIn snapshot [skip ci]"
+            git push
+          fi

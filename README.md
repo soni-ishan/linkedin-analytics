@@ -34,3 +34,23 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Weekly LinkedIn Refresh
+
+This repo includes a weekly LinkedIn snapshot workflow at [`.github/workflows/refresh-linkedin-data.yml`](.github/workflows/refresh-linkedin-data.yml) and a local helper script at [`scripts/fetch-linkedin-data.mjs`](scripts/fetch-linkedin-data.mjs).
+
+### Required secrets
+
+- `LINKEDIN_ACCESS_TOKEN`
+- `LINKEDIN_REFRESH_TOKEN` (optional, but recommended)
+- `LINKEDIN_CLIENT_ID`
+- `LINKEDIN_CLIENT_SECRET`
+- `LINKEDIN_ANALYTICS_ENDPOINTS` (optional, pipe-delimited list of extra API endpoints)
+
+### Local run
+
+```bash
+npm run fetch:linkedin
+```
+
+The script writes a snapshot to `src/data/live-linkedin-snapshot.json` by default. If LinkedIn returns only partial data for a given account or permission set, the snapshot still preserves the raw responses so you can extend the transform later.
