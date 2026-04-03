@@ -3,12 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const DEFAULT_OUTPUT_FILE = path.join(
-  ROOT_DIR,
-  "src",
-  "data",
-  "live-linkedin-snapshot.json"
-);
+const DEFAULT_OUTPUT_FILE = path.join(ROOT_DIR, "public", "live-linkedin-data.json");
 
 const {
   LINKEDIN_ACCESS_TOKEN,
