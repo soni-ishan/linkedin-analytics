@@ -35,22 +35,68 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-## Weekly LinkedIn Refresh
+## LinkedIn Data Refresh (Daily Updates)
 
-This repo includes a weekly LinkedIn snapshot workflow at [`.github/workflows/refresh-linkedin-data.yml`](.github/workflows/refresh-linkedin-data.yml) and a local helper script at [`scripts/fetch-linkedin-data.mjs`](scripts/fetch-linkedin-data.mjs).
+This project automatically refreshes LinkedIn analytics data daily using **two complementary approaches** for reliability:
 
-### Required secrets
+### 1. Vercel Cron Job (Real-time API)
+- **Runs daily at midnight UTC** via Vercel's cron feature
+- Fetches fresh data from LinkedIn API on-demand
+- Data is cached for 24 hours with stale-while-revalidate
+- Best for always-current data without needing git commits
 
+### 2. GitHub Actions (Static Backup)
+- **Runs daily at midnight UTC** via GitHub Actions workflow
+- Commits data to repository as `public/live-linkedin-data.json`
+- Serves as fallback if API route fails
+- Workflow at [`.github/workflows/refresh-linkedin-data.yml`](.github/workflows/refresh-linkedin-data.yml)
+
+### Setup Instructions
+
+#### Vercel Environment Variables
+Add these in your Vercel project settings (required for API route):
+- `LINKEDIN_ACCESS_TOKEN` - Your LinkedIn access token
+- `LINKEDIN_REFRESH_TOKEN` - (Optional but recommended) For auto-renewal
+- `LINKEDIN_CLIENT_ID` - Your LinkedIn app client ID
+- `LINKEDIN_CLIENT_SECRET` - Your LinkedIn app client secret
+- `CRON_SECRET` - (Optional) Secret token to secure the cron endpoint
+
+#### GitHub Secrets
+Add these in your repository settings under Settings → Secrets and variables → Actions:
 - `LINKEDIN_ACCESS_TOKEN`
-- `LINKEDIN_REFRESH_TOKEN` (optional, but recommended)
+- `LINKEDIN_REFRESH_TOKEN` 
 - `LINKEDIN_CLIENT_ID`
 - `LINKEDIN_CLIENT_SECRET`
-- `LINKEDIN_ANALYTICS_ENDPOINTS` (optional, pipe-delimited list of extra API endpoints)
+- `LINKEDIN_ANALYTICS_ENDPOINTS` - (Optional) Pipe-delimited list of extra API endpoints
 
-### Local run
+#### Vercel Cron Configuration
+The `vercel.json` file configures the daily cron job:
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
+```
+
+### Data Flow
+1. **Primary**: User visits site → API route `/api/linkedin-data` is called → Fresh data fetched from LinkedIn (cached 24h)
+2. **Vercel Cron**: At midnight → `/api/cron` triggers → Refreshes cache
+3. **GitHub Actions**: At midnight → Fetch script runs → Commits to `public/live-linkedin-data.json` → Fallback data
+4. **Fallback**: If API fails → Frontend loads static `public/live-linkedin-data.json`
+
+### Timestamp Display
+The dashboard shows "Data refreshed Xh ago" at the top, using the `fetchedAt` timestamp from the API response.
+
+### Local Development
+
+To fetch LinkedIn data locally for testing:
 
 ```bash
 npm run fetch:linkedin
 ```
 
-The script writes a snapshot to `src/data/live-linkedin-snapshot.json` by default. If LinkedIn returns only partial data for a given account or permission set, the snapshot still preserves the raw responses so you can extend the transform later.
+The script writes a snapshot to `public/live-linkedin-data.json` by default.

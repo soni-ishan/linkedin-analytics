@@ -9,7 +9,8 @@ import { GITHUB_URL } from "@/lib/constants";
 import ExportCallout from "@/components/upload/ExportCallout";
 import demoData from "@/data/ishaan.json";
 
-const LIVE_DATA_URL = "/live-linkedin-data.json";
+const LIVE_DATA_URL = "/api/linkedin-data";
+const FALLBACK_STATIC_URL = "/live-linkedin-data.json";
 
 const LINKEDIN_ANALYTICS_URL =
   "https://www.linkedin.com/analytics/creator/content/";
@@ -20,6 +21,7 @@ export default function Home() {
     data: demoData as LinkedInData,
   });
   const [liveData, setLiveData] = useState<LinkedInData | null>(null);
+  const [lastRefreshTime, setLastRefreshTime] = useState<string | null>(null);
   const [exiting, setExiting] = useState(false);
 
   const handleUpload = (result: UploadResult) => {
@@ -31,15 +33,48 @@ export default function Home() {
 
     const loadLiveData = async () => {
       try {
+        // Try API route first
         const response = await fetch(LIVE_DATA_URL, { cache: "no-store" });
-        if (!response.ok) {
-          return;
-        }
+        if (response.ok) {
+          const apiData = await response.json();
+          
+          // Check if this is error response
+          if (apiData.error) {
+            console.warn("API returned error:", apiData.message);
+            // Try fallback
+            await loadFallbackData();
+            return;
+          }
 
-        const liveSnapshot = (await response.json()) as LinkedInData;
-        if (!cancelled) {
-          setLiveData(liveSnapshot);
-          setData({ type: "creator", data: liveSnapshot });
+          if (!cancelled && apiData.posts) {
+            // Transform API response to LinkedInData format
+            const liveSnapshot = apiData as LinkedInData;
+            setLiveData(liveSnapshot);
+            setData({ type: "creator", data: liveSnapshot });
+            setLastRefreshTime(apiData.fetchedAt || new Date().toISOString());
+          }
+        } else {
+          // Fallback to static file
+          await loadFallbackData();
+        }
+      } catch (error) {
+        console.error("Failed to load live data:", error);
+        await loadFallbackData();
+      }
+    };
+
+    const loadFallbackData = async () => {
+      try {
+        const fallbackResponse = await fetch(FALLBACK_STATIC_URL, { cache: "no-store" });
+        if (fallbackResponse.ok) {
+          const liveSnapshot = (await fallbackResponse.json()) as LinkedInData;
+          if (!cancelled) {
+            setLiveData(liveSnapshot);
+            setData({ type: "creator", data: liveSnapshot });
+            if (liveSnapshot.fetchedAt) {
+              setLastRefreshTime(liveSnapshot.fetchedAt);
+            }
+          }
         }
       } catch {
         // Keep the seeded demo data if the live snapshot is unavailable.
@@ -65,6 +100,22 @@ export default function Home() {
   }, [liveData]);
 
   if (data) {
+    const formatTimestamp = (isoString: string) => {
+      const date = new Date(isoString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffDays > 0) {
+        return `${diffDays}d ago`;
+      } else if (diffHours > 0) {
+        return `${diffHours}h ago`;
+      } else {
+        return "just now";
+      }
+    };
+
     return (
       <div className={`min-h-screen bg-background ${exiting ? "animate-fade-out-down" : ""}`}>
         <header className="border-b border-(--border-light) px-4 py-3 sm:px-6 sm:py-4">
@@ -89,6 +140,13 @@ export default function Home() {
             </span>
             <UploadZone onDataLoaded={handleUpload} compact />
           </div>
+          {lastRefreshTime && (
+            <div className="mx-auto mt-2 max-w-7xl text-center">
+              <span className="font-mono text-[10px] text-(--muted)">
+                Data refreshed {formatTimestamp(lastRefreshTime)}
+              </span>
+            </div>
+          )}
         </header>
         <main className="mx-auto max-w-7xl px-6 py-8">
           {data.type === "creator" ? (

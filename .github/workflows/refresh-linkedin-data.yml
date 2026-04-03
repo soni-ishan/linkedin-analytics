@@ -2,7 +2,7 @@ name: Refresh LinkedIn Data
 
 on:
   schedule:
-    - cron: "0 9 * * 1"
+    - cron: "0 0 * * *"  # Daily at midnight UTC
   workflow_dispatch:
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
           LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
           LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
           LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
-          LINKEDIN_OUTPUT_FILE: src/data/live-linkedin-snapshot.json
+          LINKEDIN_OUTPUT_FILE: public/live-linkedin-data.json
           LINKEDIN_ANALYTICS_ENDPOINTS: ${{ secrets.LINKEDIN_ANALYTICS_ENDPOINTS }}
         run: npm run fetch:linkedin
 
@@ -38,7 +38,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/data/live-linkedin-snapshot.json
+          git add public/live-linkedin-data.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: refresh LinkedIn snapshot [skip ci]"
             git push

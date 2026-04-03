@@ -43,6 +43,7 @@ export interface LinkedInData {
   totalFollowers: number;
   dailyFollowers: DailyFollowers[];
   demographics: Demographics;
+  fetchedAt?: string; // ISO timestamp of when data was fetched
 }
 
 export interface TopDay {
