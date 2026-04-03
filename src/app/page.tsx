@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Dashboard from "@/components/dashboard/Dashboard";
 import CompanyDashboard from "@/components/company-dashboard/CompanyDashboard";
 import UploadZone from "@/components/upload/UploadZone";
@@ -9,54 +9,85 @@ import { GITHUB_URL } from "@/lib/constants";
 import ExportCallout from "@/components/upload/ExportCallout";
 import demoData from "@/data/ishaan.json";
 
+const LIVE_DATA_URL = "/live-linkedin-data.json";
+
 const LINKEDIN_ANALYTICS_URL =
   "https://www.linkedin.com/analytics/creator/content/";
 
 export default function Home() {
-  const [data, setData] = useState<UploadResult | null>(null);
+  const [data, setData] = useState<UploadResult | null>({
+    type: "creator",
+    data: demoData as LinkedInData,
+  });
+  const [liveData, setLiveData] = useState<LinkedInData | null>(null);
   const [exiting, setExiting] = useState(false);
 
   const handleUpload = (result: UploadResult) => {
     setData(result);
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLiveData = async () => {
+      try {
+        const response = await fetch(LIVE_DATA_URL, { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+
+        const liveSnapshot = (await response.json()) as LinkedInData;
+        if (!cancelled) {
+          setLiveData(liveSnapshot);
+          setData({ type: "creator", data: liveSnapshot });
+        }
+      } catch {
+        // Keep the seeded demo data if the live snapshot is unavailable.
+      }
+    };
+
+    void loadLiveData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleReset = useCallback(() => {
     setExiting(true);
     setTimeout(() => {
-      setData(null);
+      setData({
+        type: "creator",
+        data: liveData ?? (demoData as LinkedInData),
+      });
       setExiting(false);
     }, 300);
-  }, []);
+  }, [liveData]);
 
   if (data) {
     return (
-      <div className={`min-h-screen bg-[var(--background)] ${exiting ? "animate-fade-out-down" : ""}`}>
-        <header className="border-b border-[var(--border-light)] px-4 py-3 sm:px-6 sm:py-4">
+      <div className={`min-h-screen bg-background ${exiting ? "animate-fade-out-down" : ""}`}>
+        <header className="border-b border-(--border-light) px-4 py-3 sm:px-6 sm:py-4">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
             <button
               onClick={handleReset}
-              className="font-mono text-xs font-bold tracking-wider hover:text-[var(--accent)] sm:text-sm"
+              className="font-mono text-xs font-bold tracking-wider hover:text-(--accent) sm:text-sm"
             >
               areyouviral?
             </button>
-            <span className="font-mono text-[10px] text-[var(--muted)] sm:text-xs">
+            <span className="font-mono text-[10px] text-(--muted) sm:text-xs">
               Made by{" "}
               <a
                 href="https://ishaan.ag"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-[var(--foreground)] underline decoration-[var(--border-light)] underline-offset-4 transition-colors hover:decoration-[var(--foreground)]"
+                className="font-medium text-foreground underline decoration-(--border-light) underline-offset-4 transition-colors hover:decoration-foreground"
               >
                 Ishaan
               </a>
               <span className="hidden sm:inline">{" "}❤️</span>
             </span>
-            <button
-              onClick={handleReset}
-              className="border border-[var(--foreground)] bg-[var(--foreground)] px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--background)] transition-colors hover:border-[var(--accent)] hover:bg-[var(--accent)] sm:px-4 sm:py-2 sm:text-xs"
-            >
-              Upload new data
-            </button>
+            <UploadZone onDataLoaded={handleUpload} compact />
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-6 py-8">
@@ -71,7 +102,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen animate-fade-in-up flex-col bg-[var(--background)] sm:h-screen sm:overflow-hidden">
+    <div className="flex min-h-screen animate-fade-in-up flex-col bg-background sm:h-screen sm:overflow-hidden">
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-8 sm:py-0">
         {/* Headline */}
         <h1 className="mb-4 max-w-3xl text-center font-mono text-5xl font-black uppercase leading-tight tracking-tight sm:text-7xl">
@@ -79,7 +110,7 @@ export default function Home() {
         </h1>
 
         {/* Subtitle */}
-        <p className="mb-2 max-w-lg text-center text-lg text-[var(--muted)]">
+        <p className="mb-2 max-w-lg text-center text-lg text-(--muted)">
           Upload your LinkedIn analytics export — personal or company page
           — to see top posts, engagement metrics, and more.
         </p>
@@ -90,7 +121,7 @@ export default function Home() {
         </div>
         <button
           onClick={() => handleUpload({ type: "creator", data: demoData as LinkedInData })}
-          className="mb-6 font-mono text-xs text-[var(--muted)] underline decoration-[var(--border-light)] underline-offset-4 transition-colors hover:text-[var(--foreground)] hover:decoration-[var(--foreground)]"
+          className="mb-6 font-mono text-xs text-(--muted) underline decoration-(--border-light) underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
         >
           or try with sample data
         </button>
@@ -137,13 +168,13 @@ export default function Home() {
       </main>
 
       <footer className="shrink-0 pb-4 pt-2 text-center">
-        <p className="font-mono text-xs text-[var(--muted)]">
+        <p className="font-mono text-xs text-(--muted)">
           Made by{" "}
           <a
             href="https://ishaan.ag"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-bold text-[var(--foreground)] underline decoration-[var(--border-light)] underline-offset-4 transition-colors hover:decoration-[var(--foreground)]"
+            className="font-bold text-foreground underline decoration-(--border-light) underline-offset-4 transition-colors hover:decoration-foreground"
           >
             Ishaan
           </a>
@@ -152,7 +183,7 @@ export default function Home() {
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline decoration-[var(--border-light)] underline-offset-4 transition-colors hover:text-[var(--foreground)] hover:decoration-[var(--foreground)]"
+            className="underline decoration-(--border-light) underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
           >
             Source code
           </a>
